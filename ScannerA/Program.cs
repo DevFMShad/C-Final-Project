@@ -9,26 +9,26 @@ namespace ScannerA
 {
     class Program
     {
-        // Thread-safe dictionary to store word index: filename -> word -> count
+        
         private static readonly ConcurrentDictionary<string, Dictionary<string, int>> indexedData = new();
 
         static void Main(string[] args)
         {
-            // Set CPU affinity (Core 0 for Scanner A, Core 1 for Scanner B)
-            Process.GetCurrentProcess().ProcessorAffinity = (IntPtr)(1 << 0); // Change to 1 << 1 for Scanner B
+            
+            Process.GetCurrentProcess().ProcessorAffinity = (IntPtr)(1 << 0); 
             Console.WriteLine("Scanner A started. Enter directory path or press Enter to use default.");
 
-            // Get directory path from args or user input
+            
             string directoryPath = args.Length > 0 ? args[0] : Console.ReadLine();
             if (string.IsNullOrEmpty(directoryPath)) directoryPath = @"C:\TestFiles";
 
-            string pipeName = "agent1"; // Change to "agent2" for Scanner B
+            string pipeName = "agent1"; 
 
             try
             {
-                // Start tasks for reading files and sending data
+                
                 Task.Factory.StartNew(() => ReadAndIndexFiles(directoryPath));
-                Task.Factory.StartNew(() => SendDataToMaster(pipeName)).Wait(); // Wait for completion
+                Task.Factory.StartNew(() => SendDataToMaster(pipeName)).Wait(); 
             }
             catch (Exception ex)
             {
@@ -39,7 +39,7 @@ namespace ScannerA
             Console.ReadKey();
         }
 
-        // Task 1: Read .txt files and index words
+        
         private static void ReadAndIndexFiles(string directoryPath)
         {
             try
@@ -54,7 +54,7 @@ namespace ScannerA
                 {
                     try
                     {
-                        // Read file content and split into words
+                        
                         string content = File.ReadAllText(file).ToLower();
                         string[] words = content.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
