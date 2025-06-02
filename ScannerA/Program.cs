@@ -9,26 +9,26 @@ namespace ScannerA
 {
     class Program
     {
-        
+        // Thread-safe dictionary to store word index: filename -> word -> count
         private static readonly ConcurrentDictionary<string, Dictionary<string, int>> indexedData = new();
 
         static void Main(string[] args)
         {
-            
-            Process.GetCurrentProcess().ProcessorAffinity = (IntPtr)(1 << 0); 
+            // Set CPU affinity (Core 0 for Scanner A, Core 1 for Scanner B)
+            Process.GetCurrentProcess().ProcessorAffinity = (IntPtr)(1 << 0); // Change to 1 << 1 for Scanner B
             Console.WriteLine("Scanner A started. Enter directory path or press Enter to use default.");
 
-            
+            // Get directory path from args or user input
             string directoryPath = args.Length > 0 ? args[0] : Console.ReadLine();
             if (string.IsNullOrEmpty(directoryPath)) directoryPath = @"C:\TestFiles";
 
-            string pipeName = "agent1"; 
+            string pipeName = "agent1"; // Change to "agent2" for Scanner B
 
             try
             {
-                
+                // Start tasks for reading files and sending data
                 Task.Factory.StartNew(() => ReadAndIndexFiles(directoryPath));
-                Task.Factory.StartNew(() => SendDataToMaster(pipeName)).Wait(); 
+                Task.Factory.StartNew(() => SendDataToMaster(pipeName)).Wait(); // Wait for completion
             }
             catch (Exception ex)
             {
@@ -39,7 +39,7 @@ namespace ScannerA
             Console.ReadKey();
         }
 
-        
+        // Task 1: Read .txt files and index words
         private static void ReadAndIndexFiles(string directoryPath)
         {
             try
@@ -54,7 +54,7 @@ namespace ScannerA
                 {
                     try
                     {
-                        
+                        // Read file content and split into words
                         string content = File.ReadAllText(file).ToLower();
                         string[] words = content.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -78,6 +78,37 @@ namespace ScannerA
             }
         }
 
-        
+        // Task 2: Send indexed data to Master via named pipe
+        private static void SendDataToMaster(string pipeName)
+        {
+            try
+            {
+                using var pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.Out);
+                Console.WriteLine($"Connecting to Master pipe {pipeName}...");
+                
+                // Retry connection
+                while (!pipe.IsConnected)
+                {
+                    try { pipe.Connect(1000); }
+                    catch { Task.Delay(1000).Wait(); }
+                }
+
+                using var writer = new StreamWriter(pipe) { AutoFlush = true };
+                foreach (var file in indexedData)
+                {
+                    foreach (var word in file.Value)
+                    {
+                        // Send data in format: filename|word|count
+                        string data = $"{file.Key}|{word.Key}|{word.Value}";
+                        writer.WriteLine(data);
+                        Console.WriteLine($"Sent: {data}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending data to Master: {ex.Message}");
+            }
+        }
     }
 }
