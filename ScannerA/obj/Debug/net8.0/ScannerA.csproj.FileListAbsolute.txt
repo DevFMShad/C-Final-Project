@@ -1,0 +1,15 @@
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\bin\Debug\net8.0\ScannerA.exe
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\bin\Debug\net8.0\ScannerA.deps.json
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\bin\Debug\net8.0\ScannerA.runtimeconfig.json
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\bin\Debug\net8.0\ScannerA.dll
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\bin\Debug\net8.0\ScannerA.pdb
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\ScannerA.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\ScannerA.AssemblyInfoInputs.cache
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\ScannerA.AssemblyInfo.cs
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\ScannerA.csproj.CoreCompileInputs.cache
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\ScannerA.sourcelink.json
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\ScannerA.dll
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\refint\ScannerA.dll
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\ScannerA.pdb
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\ScannerA.genruntimeconfig.cache
+C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA\obj\Debug\net8.0\ref\ScannerA.dll

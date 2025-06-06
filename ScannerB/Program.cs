@@ -3,112 +3,149 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace ScannerA
+namespace ScannerB
 {
     class Program
     {
-        // Thread-safe dictionary to store word index: filename -> word -> count
         private static readonly ConcurrentDictionary<string, Dictionary<string, int>> indexedData = new();
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            // Set CPU affinity (Core 0 for Scanner A, Core 1 for Scanner B)
-            Process.GetCurrentProcess().ProcessorAffinity = (IntPtr)(1 << 1); 
-            Console.WriteLine("Scanner A started. Enter directory path or press Enter to use default.");
+            Console.Title = "Scanner B"; // Set console window title
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Process.GetCurrentProcess().ProcessorAffinity = (IntPtr)(1 << 1); // Core 1
+            }
+            else
+            {
+                LogError("CPU affinity not supported on this platform.");
+            }
 
-            // Get directory path from args or user input
-            string directoryPath = args.Length > 0 ? args[0] : Console.ReadLine();
-            if (string.IsNullOrEmpty(directoryPath)) directoryPath = @"C:\TestFiles";
+            LogHeader("Scanner B Started");
+            Console.WriteLine("Enter directory path or press Enter to use default (C:\\TestFiles):");
 
-            string pipeName = "agent2"; 
+            string directoryPath = args.Length > 0 ? args[0].TrimStart('-') : Console.ReadLine() ?? @"C:\TestFiles";
+            directoryPath = directoryPath.Trim();
 
             try
             {
-                // Start tasks for reading files and sending data
-                Task.Factory.StartNew(() => ReadAndIndexFiles(directoryPath));
-                Task.Factory.StartNew(() => SendDataToMaster(pipeName)).Wait(); // Wait for completion
+                LogStatus($"\nIndexing files in {directoryPath}...");
+                await Task.Factory.StartNew(() => ReadAndIndexFiles(directoryPath));
+                LogStatus("Indexing complete. Sending data to Master...");
+                await Task.Factory.StartNew(() => SendDataToMaster("agent2"));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                LogError($"Error in Scanner B: {ex.Message}");
             }
 
-            Console.WriteLine("Scanner A completed. Press any key to exit.");
+            LogHeader("Scanner B Completed");
+            Console.WriteLine("Press any key to exit.");
             Console.ReadKey();
         }
 
-        // Task 1: Read .txt files and index words
         private static void ReadAndIndexFiles(string directoryPath)
         {
-            try
+            if (!Directory.Exists(directoryPath))
             {
-                if (!Directory.Exists(directoryPath))
+                LogError($"Directory {directoryPath} does not exist.");
+                return;
+            }
+
+            var files = Directory.GetFiles(directoryPath, "*.txt");
+            if (files.Length == 0)
+            {
+                LogError("No .txt files found in directory.");
+                return;
+            }
+
+            foreach (string file in files)
+            {
+                try
                 {
-                    Console.WriteLine($"Directory {directoryPath} does not exist.");
-                    return;
+                    string content = File.ReadAllText(file).ToLower();
+                    string[] words = content.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    var wordCounts = words.GroupBy(w => w).ToDictionary(g => g.Key, g => g.Count());
+                    indexedData.TryAdd(Path.GetFileName(file), wordCounts);
+                    LogData($"Indexed: {Path.GetFileName(file),-30} | Words: {wordCounts.Count}");
                 }
-
-                foreach (string file in Directory.GetFiles(directoryPath, "*.txt"))
+                catch (IOException ex)
                 {
-                    try
-                    {
-                        // Read file content and split into words
-                        string content = File.ReadAllText(file).ToLower();
-                        string[] words = content.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-                        // Count word occurrences
-                        var wordCounts = words.GroupBy(w => w)
-                                             .ToDictionary(g => g.Key, g => g.Count());
-
-                        // Store in indexedData
-                        indexedData.TryAdd(Path.GetFileName(file), wordCounts);
-                        Console.WriteLine($"Indexed file: {Path.GetFileName(file)}");
-                    }
-                    catch (IOException ex)
-                    {
-                        Console.WriteLine($"Error reading file {file}: {ex.Message}");
-                    }
+                    LogError($"Error reading file {file}: {ex.Message}");
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error indexing files: {ex.Message}");
-            }
+            LogStatus($"Total files indexed: {files.Length}");
         }
 
-        // Task 2: Send indexed data to Master via named pipe
         private static void SendDataToMaster(string pipeName)
         {
             try
             {
                 using var pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.Out);
-                Console.WriteLine($"Connecting to Master pipe {pipeName}...");
+                LogStatus($"Connecting to Master pipe {pipeName}...");
                 
-                // Retry connection
-                while (!pipe.IsConnected)
+                int retries = 5;
+                while (!pipe.IsConnected && retries-- > 0)
                 {
                     try { pipe.Connect(1000); }
                     catch { Task.Delay(1000).Wait(); }
                 }
 
+                if (!pipe.IsConnected)
+                {
+                    LogError($"Failed to connect to Master pipe {pipeName}.");
+                    return;
+                }
+
+                LogStatus($"Connected to {pipeName}");
                 using var writer = new StreamWriter(pipe) { AutoFlush = true };
                 foreach (var file in indexedData)
                 {
                     foreach (var word in file.Value)
                     {
-                        // Send data in format: filename|word|count
                         string data = $"{file.Key}|{word.Key}|{word.Value}";
                         writer.WriteLine(data);
-                        Console.WriteLine($"Sent: {data}");
+                        LogData($"Sent: {file.Key,-30} | Word: {word.Key,-15} | Count: {word.Value}");
                     }
                 }
+                LogStatus($"Data transfer to {pipeName} complete.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error sending data to Master: {ex.Message}");
+                LogError($"Error sending data to Master: {ex.Message}");
             }
+        }
+
+        // Helper methods for formatted, colored output
+        private static void LogHeader(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] ===== {message} =====");
+            Console.ResetColor();
+        }
+
+        private static void LogStatus(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {message}");
+            Console.ResetColor();
+        }
+
+        private static void LogData(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {message}");
+            Console.ResetColor();
+        }
+
+        private static void LogError(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {message}");
+            Console.ResetColor();
         }
     }
 }
