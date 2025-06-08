@@ -91,17 +91,13 @@ dotnet build WordIndexingSolution.sln
  How to Use
 Launch the applications in separate terminal windows to see the system in action!  The Master must run first to listen for connections from ScannerA and ScannerB.
 Step-by-Step Guide
-Open Visual Studio Code (optional):
-bash
 
+Open Visual Studio Code (optional):
 cd C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project
 code .
 
 Run Master :
-Open a terminal (in VS Code or Command Prompt).
-
-Start the Master to listen on named pipes agent1 and agent2:
-bash
+Open a terminal (in VS Code or Command Prompt).Start the Master to listen on named pipes agent1 and agent2:
 
 cd C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\Master
 dotnet run
@@ -115,10 +111,7 @@ Expected output:
 [09:13:01] Press any key to display results and exit...
 
 Run ScannerA :
-Open a new terminal (in VS Code, use Terminal > New Terminal).
-
-Start ScannerA to index files and send data to Master:
-bash
+Open a new terminal (in VS Code, use Terminal > New Terminal). Start ScannerA to index files and send data to Master:
 
 cd C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerA
 dotnet run -- "C:\Users\fuade\Downloads\Tests\small test"
@@ -140,10 +133,7 @@ Enter directory path or press Enter to use default (C:\TestFiles):
 Press any key to exit.
 
 Run ScannerB :
-Open another terminal.
-
-Start ScannerB:
-bash
+Open another terminal. Start ScannerB:
 
 cd C:\Users\fuade\OneDrive\Documents\GitHub\C-Final-Project\ScannerB
 dotnet run -- "C:\Users\fuade\Downloads\Tests\small test"
@@ -172,58 +162,14 @@ Press any key to display the consolidated word index:
   world             1
 [09:13:05] ===== End of Report =====
 
+
 Tips
+
 Run Master First : Ensures named pipes are available for Scanners.
-
 Test with Multiple Files : Add more .txt files to demonstrate aggregation.
-
 Debug in VS Code : Use breakpoints and the C# extension for step-by-step debugging (F5).
-
 Handle Spaces in Paths : The code supports paths with spaces (e.g., small test) using proper quoting.
 
- Example Output
-ScannerA
-
-[09:13:02] ===== Scanner A Started =====
-Enter directory path or press Enter to use default (C:\TestFiles):
-[09:13:02] Indexing files in C:\Users\fuade\Downloads\Tests\small test...
-[09:13:02] Indexed: Test document.txt                | Words: 2
-[09:13:02] Total files indexed: 1
-[09:13:02] Indexing complete. Sending data to Master...
-[09:13:03] Connected to agent1
-[09:13:03] Sent: Test document.txt                | Word: hello           | Count: 2
-[09:13:03] Sent: Test document.txt                | Word: world           | Count: 1
-[09:13:03] Data transfer to agent1 complete.
-[09:13:03] ===== Scanner A Completed =====
-
-Master (Consolidated)
-
-[09:13:05] ===== Consolidated Word Index =====
-[09:13:05] Summary: 2 files, 3 unique words, 10 total occurrences
-
-[09:13:05] File: Test document.txt
-  Word            Count
-  --------------- -----
-  hello             4
-  world             2
-
-[09:13:05] File: test2.txt
-  Word            Count
-  --------------- -----
-  hello             2
-  test              1
-  world             1
-[09:13:05] ===== End of Report =====
-
- Contributing
-Want to make this project even more awesome?  Fork the repo, create a branch, and submit a pull request with your enhancements. Ideas to explore:
- Streaming for Large Files: Use File.ReadLines for memory efficiency.
-
- Custom Output Styles: Add ASCII art or different color schemes.
-
- Advanced Error Handling: Support non-text files or special characters.
-
- Extended Stats: Include processing time or word frequency rankings.
 
  License
 This project is licensed under the MIT License. Feel free to use, modify, and share! 
