@@ -30,8 +30,10 @@ namespace Master
             {
                 var tasks = new[]
                 {
-                    Task.Factory.StartNew(() => HandlePipe("agent1")),
-                    Task.Factory.StartNew(() => HandlePipe("agent2"))
+                    //Task.Factory.StartNew(() => HandlePipe("agent1")),
+                    Task.Run(() => HandlePipe("agent1")),
+                    //Task.Factory.StartNew(() => HandlePipe("agent2"))
+                    Task.Run(() => HandlePipe("agent2"))
                 };
 
                 LogStatus("Press any key to display results and exit...");
